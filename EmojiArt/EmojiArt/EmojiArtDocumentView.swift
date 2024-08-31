@@ -13,12 +13,12 @@ struct EmojiArtDocumentView: View {
     private let emojis = "🌟🍉🐢🚀🎈🦋🍕🍦🎮🍓🐱🦄🎨🏀🌺🐶🍀🚲🎃📚🏖️🐸🎧🍎🚁🌻🎂🎵🍇📷🐍🍔🌞🍭🏆"
     typealias emoji = EmojiArt.Emoji
     
-    private let paletteEmojiSize: CGFloat = 40
+    private let emojiSize: CGFloat = 40
     var body: some View {
         VStack(spacing: 0) {
             documentBody
             ScrollingEmojis(emojis)
-                .font(.system(size: paletteEmojiSize))
+                .font(.system(size: emojiSize))
                 .padding(.horizontal)
                 .scrollIndicators(.hidden)
         }
@@ -50,7 +50,7 @@ struct EmojiArtDocumentView: View {
                 document.setBackground(url)
                 return true
             case .string(let emoji):
-                document.addEmoji(position: emojiPosition(location, geometry), size: 40, emoji)
+                document.addEmoji(position: emojiPosition(location, geometry), size: emojiSize, emoji)
                 return true
             default:
                 break
