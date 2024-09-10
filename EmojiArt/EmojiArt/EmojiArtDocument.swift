@@ -11,10 +11,34 @@ class EmojiArtDocument: ObservableObject {
     
     typealias Emoji = EmojiArt.Emoji
     
-    @Published private var emojiArt = EmojiArt()
+    @Published private var emojiArt = EmojiArt() {
+        didSet {
+            autosave()
+        }
+    }
     
-    init() {
-        
+    private let autosaveURL : URL = URL.documentsDirectory.appendingPathComponent("Autosaved.emojiArt")
+    
+    private func autosave() {
+        save(to: autosaveURL)
+        print("\(autosaveURL)")
+    }
+    
+    private func save(to url: URL) {
+        do {
+            let data = try emojiArt.json()
+            try data.write(to: url)
+        }
+        catch let error {
+            print("EmojiArtDocument: error while saving \(error.localizedDescription)")
+        }
+    }
+    
+    init () {
+        if let data = try? Data(contentsOf: autosaveURL),
+           let autosavedEmojiArt = try? EmojiArt(json: data){
+            emojiArt = autosavedEmojiArt
+        }
     }
     
     var emojis : [Emoji] {

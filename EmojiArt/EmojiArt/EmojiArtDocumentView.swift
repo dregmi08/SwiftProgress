@@ -10,14 +10,14 @@ import SwiftUI
 struct EmojiArtDocumentView: View {
     
     @ObservedObject var document = EmojiArtDocument()
-    private let emojis = "🌟🍉🐢🚀🎈🦋🍕🍦🎮🍓🐱🦄🎨🏀🌺🐶🍀🚲🎃📚🏖️🐸🎧🍎🚁🌻🎂🎵🍇📷🐍🍔🌞🍭🏆"
+
     typealias emoji = EmojiArt.Emoji
     
     private let emojiSize: CGFloat = 40
     var body: some View {
         VStack(spacing: 0) {
             documentBody
-            ScrollingEmojis(emojis)
+            ThemesView()
                 .font(.system(size: emojiSize))
                 .padding(.horizontal)
                 .scrollIndicators(.hidden)
@@ -28,18 +28,39 @@ struct EmojiArtDocumentView: View {
         GeometryReader { geometry in
             ZStack {
                 Color.white
-                AsyncImage(url: document.background)
-                    .position(emoji.Position.zero.in(geometry))
-                ForEach(document.emojis) { emoji in
-                    Text(emoji.string)
-                        .font(emoji.font)
-                        .position(emoji.position.in(geometry))
-                }
+                doccontent(in: geometry)
+                    .scaleEffect(zoomamt * currentZoom)
+                    .offset(pan + gestPanAmt)
             }
+            .gesture(dragGest .simultaneously(with: zoom))
             .dropDestination(for: Sturldata.self) { sturldatas, location in
-               
                 return drop(sturldatas, at: location, in: geometry)
             }
+        }
+    }
+    
+    @State private var zoomamt: CGFloat = 0.5
+    @State private var pan: CGOffset = .init(width: 100, height: 100)
+
+    @ViewBuilder
+    private func doccontent(in geometry: GeometryProxy) -> some View {
+        AsyncImage(url: document.background) { phase in
+            if let image = phase.image {
+                image
+            } else if let url = document.background {
+                if phase.error != nil {
+                    Text("\(url)")
+                }
+                else {
+                    ProgressView()
+                }
+            }
+        }
+        .position(emoji.Position.zero.in(geometry))
+        ForEach(document.emojis) { emoji in
+            Text(emoji.string)
+                .font(emoji.font)
+                .position(emoji.position.in(geometry))
         }
     }
     
@@ -59,34 +80,43 @@ struct EmojiArtDocumentView: View {
         return false
     }
     
+    @GestureState private var currentZoom: CGFloat = 1
+    
+    private var zoom : some Gesture {
+        MagnificationGesture()
+            .updating($currentZoom) {pinchamt, currentZoom, _ in
+                currentZoom *= pinchamt
+            }
+            .onEnded { pinchScale in
+                zoomamt *= pinchScale
+            }
+    }
+    
+    @GestureState private var gestPanAmt : CGOffset = .zero
+    
+    private var dragGest : some Gesture {
+        DragGesture()
+            .updating($gestPanAmt) { value, gestPanAmt, _ in
+                gestPanAmt = value.translation
+            }
+            .onEnded { value in
+                pan += value.translation
+            }
+    }
+    
     private func emojiPosition (_ location: CGPoint, _ geometry: GeometryProxy) -> emoji.Position {
         let center = geometry.frame(in: .local).center
-        return emoji.Position (x: Int(center.x - location.x), y:  -(Int(center.y - location.y)))
+        return emoji.Position(
+            x: Int((location.x - center.x - pan.width)/zoomamt),
+            y: Int(-(location.y - center.y - pan.height)/zoomamt)
+        )
     }
 }
 
-
-struct ScrollingEmojis: View {
-    let emojis: [String]
-    
-    init(_ emojis: String) {
-        self.emojis = emojis.uniqued.map(String.init)
-    }
-    
-    var body: some View {
-        ScrollView(.horizontal) {
-            HStack {
-                ForEach(emojis, id: \.self) { emoji in
-                    Text(emoji)
-                        .draggable(emoji)
-                }
-            }
-        }
-    }
-}
 
 struct EmojiArtDocumentView_Previews: PreviewProvider {
     static var previews: some View {
         EmojiArtDocumentView(document: EmojiArtDocument())
+            .environmentObject(EmojiThemesStore(themeName: "preview"))
     }
 }
