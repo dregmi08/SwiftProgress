@@ -33,11 +33,18 @@ struct EmojiArt: Codable{
         
     }
     
+    mutating func select(_ emoji: Emoji) {
+        if let emojiIdx = emojis.firstIndex(where: {emoji.id == $0.id}) {
+            emojis[emojiIdx].isSelected.toggle()
+        }
+    }
+    
     struct Emoji: Identifiable, Codable {
         let id : Int
         let string: String
         var position: Position
         var size: Int
+        var isSelected = false
         
         struct Position: Codable {
             var x: Int

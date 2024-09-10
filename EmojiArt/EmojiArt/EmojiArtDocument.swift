@@ -49,6 +49,10 @@ class EmojiArtDocument: ObservableObject {
         emojiArt.background
     }
     
+    func select(_ emoji: Emoji) {
+        emojiArt.select(emoji)
+    }
+    
     //MARK: - Intents
 
     func setBackground(_ url: URL?) {

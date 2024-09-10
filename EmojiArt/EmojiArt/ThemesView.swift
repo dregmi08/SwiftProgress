@@ -54,6 +54,8 @@ struct ThemesView: View {
                     ForEach(emojis, id: \.self) { emoji in
                         Text(emoji)
                             .draggable(emoji)
+                            .shadow(color: Color.blue.opacity(0.8), radius: 10, x: 0, y: 0) // First glow
+
                     }
                 }
             }
